@@ -1,25 +1,249 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState,useEffect } from "react";
+import axios from "axios";
 
-function App() {
+export default function CadastroDocentes() {
+  const [docentes, setDocentes] = useState([]);
+    const [modalType, setModalType] = useState(null); // 'create' ou 'edit'
+    const [ativo, setAtivo] = useState(false);
+    const [formData, setFormData] = useState({
+      matricula: "",
+      nome: "",
+      email: "",
+      dataNascimento: "",
+      situacao: "Estatutário",
+      dataAdmissao: "",
+    });
+
+    const fetchDocentes = async () => {
+      try {
+        const response = await axios.get("http://localhost:3001/docentes");
+        console.log("Dados recebidos:", response.data); // Verifica os dados
+        setDocentes(response.data);
+      } catch (error) {
+        console.error("Erro ao buscar docentes:", error);
+        setDocentes([]); // Evita que fique undefined
+      }
+    };
+    
+    useEffect(() => {
+      fetchDocentes();
+    }, []);
+
+    // Envia o formulário para o backend
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      try {
+        if (modalType === "edit") {
+          await axios.put(`http://localhost:3001/docentes/${formData.matricula}`, formData);
+        } else {
+          await axios.post("http://localhost:3001/docentes", formData);
+        }
+        fetchDocentes(); // Atualiza a tabela
+        setModalType(null); // Fecha o modal
+      } catch (error) {
+        console.error("Erro ao salvar docente:", error);
+      }
+    };
+    
+    const [errors, setErrors] = useState({
+      email: "",
+    });
+    
+    const validateEmail = (email) => {
+      const regex = /^[a-zA-Z0-9._-]+@(gmail|outlook|hotmail)\.(com|com\.br)$/;
+      return regex.test(email);
+    };
+    
+    const handleChange = (e) => {
+      const { id, value } = e.target;
+    
+      // Validação de e-mail
+      if (id === "email") {
+        if (value && !validateEmail(value)) {
+          setErrors((prevErrors) => ({
+            ...prevErrors,
+            email: "E-mail inválido. Use @gmail, @outlook ou @hotmail",
+          }));
+        } else {
+          setErrors((prevErrors) => ({ ...prevErrors, email: "" }));
+        }
+      }
+    
+      // Atualiza os campos do formulário
+      setFormData((prev) => ({
+        ...prev,
+        [id]: value,
+      }));
+    };
+
+      
+      // Aqui você pode enviar os dados para uma API
+      //console.log("Dados do formulário:", formData);
+     //alert("Cadastro salvo com sucesso!");
+    
+    
+    // console.log("Dados do formulário:", formData);
+    // alert(
+    //   modalType === "create"
+    //     ? "Cadastro salvo com sucesso!"
+    //     : "Edição salva com sucesso!"
+    // );
+    // setModalType(null); // Fecha o modal após submeter
+
+
+    const openCreateModal = () => {
+      // Limpa o formulário para um novo cadastro
+    setFormData({
+      matricula: "",
+      nome: "",
+      email: "",
+      dataNascimento: "",
+      situacao: "Estatutário",
+      dataAdmissao: "",
+      areaConcurso: "",
+      status: "",
+    });
+    setModalType("create");
+  };
+
+  const openEditModal = () => {
+    // Aqui você poderia preencher com os dados do docente selecionado
+    // Exemplo com dados fictícios:
+    setFormData({
+      matricula: "12345",
+      nome: "Professor Exemplo",
+      email: "professor@example.com",
+      dataNascimento: "1980-01-01",
+      situacao: "Estatutário",
+      dataAdmissao: "2010-05-15",
+      areaConcurso: "Matemática",
+      status: "Ativo",
+    });
+    setModalType("edit");
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+  <div className="container">
+    <h1>Cadastro de Docentes</h1>
+    <button id="btnNovoDocente" onClick={openCreateModal}>
+      <img src="/images/mais.png" className="mais"/>
+       Novo
+    </button>
+    <button  id="btnEditar" onClick={() => openEditModal(docentes.matricula)}>
+    <img src="/images/pencilbranco.png" className="pencilEditar" alt="Editar" />
+      Editar Docente
+    </button>
 
-export default App;
+    {modalType && (
+      <div className="modal-overlay">
+        <div className="modal">
+          <h2>
+            {modalType === "create" ? "Cadastrar Docente" : "Editar Docente"}
+          </h2>
+          <form onSubmit={handleSubmit}>
+            <label htmlFor="matricula">Matrícula:</label>
+            <input type="text" id="matricula" required  value={formData.matricula} onChange={handleChange} placeholder="Digite o número da matrícula" />
+
+            <label htmlFor="nome">Nome:</label>
+            <input type="text" id="nome" required  value={formData.nome} onChange={handleChange} placeholder="Digite o nome do docente"/>
+
+            <label htmlFor="email">E-mail:</label>
+            <input
+              type="email"
+              id="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={errors.email ? "input-error" : ""}
+              placeholder="Digite o nome do docente "
+            />
+            {errors.email && (
+              <span className="error-message">{errors.email}</span>
+            )}
+
+            <label htmlFor="dataNascimento">Data de Nascimento:</label>
+            <input
+              type="date"
+              id="dataNascimento"
+              required
+              value={formData.dataNascimento}
+              onChange={handleChange}
+              placeholder="Digite a data de nascimento do docente"
+            />
+
+            <label htmlFor="dataAdmissao">Data de Admissão:</label>
+            <input
+              type="date"
+              id="dataAdmissao"
+              required
+              value={formData.dataAdmissao}
+              onChange={handleChange}
+              placeholder="Digite a data de admissão do docente"
+            />
+
+            <label htmlFor="situacao">Situação:</label>
+            <select
+              id="situacao"
+              required
+              value={formData.situacao}
+              onChange={handleChange}
+            >
+              <option value="Estatutário">Estatutário</option>
+              <option value="CLT">CLT</option>
+            </select>
+
+            <label htmlFor="areaConcurso">Área do Concurso:</label>
+            <input type="text" id="areaConcurso" required value={formData.areaConcurso} onChange={handleChange} placeholder="Digite a área do concurso" />
+
+            <label htmlFor="status">Status:</label>
+            <button
+              className={`toggle-button ${ativo ? "ativo" : "desativado"}`}
+              onClick={() => setAtivo(!ativo)}
+            >
+            {ativo ? "Ativado" : "Desativado"}
+            </button>
+
+            <button type="submit">Salvar</button>
+            <button type="button" onClick={() => setModalType(null)}>Cancelar</button>
+          </form>
+        </div>
+      </div>
+    )}
+
+    <table id="docentesTable">
+      <thead>
+        <tr>
+          <th>Matrícula</th>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>Data de Nascimento</th>
+          <th>Data de Admissão</th>
+          <th>Situação</th>
+          <th>Área do Concurso</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+  {docentes && docentes.length > 0 ? (
+    docentes.map((docente) => (
+      <tr>
+        <td>{docente.matricula_doc}</td>
+        <td>{docente.nome_doc}</td>
+        <td>{docente.email_doc}</td>
+        <td>{new Date(docente.data_nasci_doc).toLocaleDateString()}</td>
+        <td>{new Date(docente.data_adimissao_doc).toLocaleDateString()}</td>
+        <td>{docente.situacao_doc}</td>
+        <td>{docente.area_concurso_doc}</td>
+        <td>{docente.status_doc === 1  ? "ativo" : "desativado"}</td>
+      </tr>
+    ))
+  ) : (
+    <tr>
+      <td colSpan="8">Nenhum docente encontrado</td>
+    </tr>
+  )}
+</tbody>
+
+    </table>
+  </div>
+);
+};

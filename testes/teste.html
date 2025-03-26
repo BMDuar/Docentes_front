@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./teste.css">
+    <title>Cadastro de Docentes</title>
+</head>
+<body>
+    <div class="container">
+        <h1 style="color: #532b88;">Cadastro de Docentes</h1>
+        <button id="btnNovoDocente">+ Novo</button>
+        <button id="btnEditar">
+        <img src="C:\Users\37199\Downloads\pencilbranco.png" class="pencilEditar" alt="">    
+            Editar Docente
+        
+        </button>
+        
+        <div id="formContainer" class="hidden">
+            <h2 id="formTitle">Cadastrar Docente</h2>
+            <form id="docenteForm">
+                <input type="hidden" id="docenteId">
+                <label for="matricula">Matrícula:</label>
+                <input type="text" id="matricula" required>
+                
+                <label for="nome">Nome:</label>
+                <input type="text" id="nome" required>
+                
+                <label for="email">E-mail:</label>
+                <input type="email" id="email" required>
+                
+                <label for="dataNascimento">Data de Nascimento:</label>
+                <input type="date" id="dataNascimento" required>
+
+                <label for="dataAdmissao">Data de Admissão:</label>
+                <input type="date" id="dataAdmissao" required>
+                
+                <label for="situacao">Situação:</label>
+                <input type="text" id="situação" required>  
+                
+                <label for="areaConcurso">Área do Concurso:</label>
+                <input type="text" id="areaConcurso" required>
+                
+                <label for="status">Status:</label>
+                <input type="text" id="status" required>
+
+                <select id="situacao" required>
+                    <option value="Estatutário">Estatutário</option>
+                    <option value="CLT">CLT</option>
+                </select>
+                
+                <label for="dataAdmissao">Data de Admissão:</label>
+                <input type="date" id="dataAdmissao" required>
+                
+                <label for="areaConcurso">Área do Concurso:</label>
+                <input type="text" id="areaConcurso" required>
+                
+                <button type="submit">Salvar</button>
+                <button type="button" id="btnCancelar">Cancelar</button>
+            </form>
+        </div>
+
+        <table id="docentesTable">
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>Data de Nascimento</th>
+                    <th>Data de Adimissão</th>
+                    <th>Situação</th>
+                    <th>Área do Concurso</th>
+                    <th>Status</th> 
+                </tr>
+            </thead>
+            <tbody id="docentesList"></tbody>
+        </table>
+    </div>
+
+    <script src="./teste.js"></script>
+</body>
+</html>

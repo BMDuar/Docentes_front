@@ -1,0 +1,14 @@
+header{
+    width: 100%;
+    height: 100px;
+    background-color:black ;
+}
+
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+  
+button.addDocente{
+    background-color: rgba(79, 70, 229, var(--tw-bg-opacity));
+}
