@@ -1,0 +1,8 @@
+{
+    "STATIC_URL_DEV": "http://localhost:3001",
+
+  
+  
+    "MAINTENANCE_END_DATE": "2025-02-03T23:59:59"
+  }
+  
