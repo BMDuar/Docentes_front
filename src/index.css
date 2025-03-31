@@ -125,6 +125,13 @@ body {
   }
 }
 
+.btnLixo{
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  margin-left: 17px;
+}
+
 /* Caixa de Pesquisa */
 .button-container {
   display: flex;
@@ -186,8 +193,7 @@ body {
   background-color: red;
 }
 
-.input-error {
-  border-color: red;
+.modal .input-error {
   border: 2px solid red;
   background-color: #ffe6e6;
 }
@@ -198,14 +204,25 @@ body {
   margin-top: 5px;
 }
 
+.pErro{
+  color: red;
+  font-size: 12px;
+  margin-top: 5px;
+}
 
-
-h1, h2 {
-  text-align: center;
+.logo{
+  width: 200px;
+  height: 75px;
+  position: absolute;
+  right: 15vw;
 }
 
 .hidden {
   display: none;
+}
+
+h1, h2 {
+  text-align: center;
 }
 
 table {
@@ -213,6 +230,12 @@ table {
   border-collapse: collapse;
   margin-top: 20px;
   background-color: #fff; 
+}
+
+#containerTable{
+  overflow-y: auto;
+  width: 100%;
+  height: 71vh;
 }
 
 tr:nth-child(even) {
@@ -230,4 +253,8 @@ th, td {
 
 th {
   background-color: #f2f2f2;
+}
+
+tbody{
+  overflow:auto;
 }
