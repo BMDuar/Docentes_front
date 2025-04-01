@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import api from "./services/api";
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+
 
 export default function CadastroDocentes() {
   const [docentes, setDocentes] = useState([]);
   const [matricula, setMatricula] = useState("");
   const [modalType, setModalType] = useState(null); // 'create' ou 'edit'
+  const [modalExcluir,setMoldalExcluir] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [erroNome, setErroNome] = useState("");
   const [erroMatricula, setErroMatricula] = useState("");
@@ -58,15 +61,30 @@ export default function CadastroDocentes() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!matricula.trim()) {
+      alert("Por favor, insira um ID válido.");
+      return;
+    }
+    try {
+      await api.delete(`/docentes/${formData.matricula}`);
+      alert("Docente excluído com sucesso!");
+      setMoldalExcluir(false);
+      setMatricula("");
+    } catch (error) {
+      console.error("Erro ao excluir docente:", error);
+      alert("Erro ao excluir docente. Verifique se o ID está correto.");
+    }
+  };
 
   const validateEmail = (email) => {
     const regex = /^[a-zA-Z0-9._-]+@(fiec)\.(com\.br|edu\.br)$/;
     return regex.test(email);
   };
-
+  
   const handleChange = (e) => {
     const { id, value } = e.target;
-
+    
     // Validação de e-mail
     if (id === "email") {
       if (!value) {
@@ -82,6 +100,7 @@ export default function CadastroDocentes() {
       }
     }
 
+    
     //Validação do Nome
     if (id === "nome") {
       if (!validarNomeCompleto(value)) {
@@ -114,8 +133,6 @@ export default function CadastroDocentes() {
   };
 
   const openEditModal = () => {
-    // Aqui você poderia preencher com os dados do docente selecionado
-    // Exemplo com dados fictícios:
     setFormData({
       matricula: "",
       nome: "",
@@ -129,8 +146,9 @@ export default function CadastroDocentes() {
     setModalType("edit");
   };
 
+
   
-  //Inicio Funcoes triviais
+  //Inicio Funcoes complementares
   const pesquisarDocentes = () => {
     const termo = searchTerm.trim().toLowerCase();
     const rows = document.querySelectorAll("#docentesTable tbody tr");
@@ -166,7 +184,7 @@ export default function CadastroDocentes() {
       setFormData(api.martricula);
       setErroMatricula("");
     } else {
-      setFormData({ nome: "", email: "", cargo: "" });
+      setFormData({ nome: "", email: "", dataNascimento: "", dataAdmissao:"", situacao:"", areaConcurso:"" ,status:"" });
       setErroMatricula("Matrícula não encontrada.");
     }
   }
@@ -179,7 +197,7 @@ export default function CadastroDocentes() {
     if (value.length >= 5) { // Supondo que a matrícula tenha 5 dígitos
       buscarDados(value);
     } else {
-      setFormData({ nome: "", email: "", cargo: "" });
+      setFormData({nome: "", email: "", dataNascimento: "", dataAdmissao:"", situacao:"", areaConcurso:"" ,status:"" });
       setErroMatricula("");
     }
   }
@@ -220,8 +238,9 @@ export default function CadastroDocentes() {
         </button>
       </div>
 
+      {/* Moldal Criar ou exluir */}
       {modalType && (
-        <div className="modal-overlay">
+        <div className="modalOverlay">
           <div className="modal">
             <h2>
               {modalType === "create" ? "Cadastrar Docente" : "Editar Docente"}
@@ -321,6 +340,8 @@ export default function CadastroDocentes() {
           </div>
         </div>
       )}
+      {/* Fim modal Criar ou Editar */}
+
       <div id="containerTable">
         <table id="docentesTable">
           <thead>
@@ -333,7 +354,7 @@ export default function CadastroDocentes() {
               <th>Situação</th>
               <th>Área do Concurso</th>
               <th>Status</th>
-              <th>Opçoes</th>
+              <th>Opções</th>
             </tr>
           </thead>
           <tbody>
@@ -359,11 +380,24 @@ export default function CadastroDocentes() {
                   >
                     {docente.status_doc == 1 ? "Ativado" : "Desativado"}
                   </td>
+
+                  {/* Modal Excluir */}
                   <td> 
-                    <button style={{ border: "none", background: "none", cursor: "pointer" }} >
+                    {modalExcluir &&(
+                      <div className="modalOverlay">
+                        <div className="modalExcluir">
+                          <img src="/images/cancel.gif" className="alert"></img>
+                        <h3 >Atenção! Deseja excluir o docente? Essa ação não é reversível </h3>
+                        <button type="submit" id="btnExcluir" onChange={handleDelete}>Sim</button>
+                        <button type="button" onClick={() => setMoldalExcluir(null)} id="btnCancelar"> Cancelar </button>
+                        </div>
+                      </div>
+                    )}
+                    {/* Fim modal Excluir */}
+
+                    <button style={{ border: "none", background: "none", cursor: "pointer" }} onClick={() => setMoldalExcluir(true)} >
                     <img src="/images/lixo.png" className="btnLixo"></img>  
                     </button>
-                  
                   </td>
                 </tr>
               ))
@@ -373,10 +407,10 @@ export default function CadastroDocentes() {
             </tr>
             )}
           </tbody>
-{docentes && docentes.length > 0 && 
-  document.querySelectorAll("#docentesTable tbody tr[style='display: none;']").length === docentes.length && (
-    <div className="no-results">Nenhum resultado encontrado para "{searchTerm}"</div>
-)}
+            {docentes && docentes.length > 0 && 
+              document.querySelectorAll("#docentesTable tbody tr[style='display: none;']").length === docentes.length && (
+              <div className="no-results">Nenhum resultado encontrado para "{searchTerm}"</div>
+            )}
         </table>      
       </div>
     </div>

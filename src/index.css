@@ -1,5 +1,5 @@
 /*Estilização do modal de Cadastro e de Edição*/
-.modal-overlay {
+.modalOverlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -12,6 +12,14 @@
 }
 
 .modal {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  width: 30%;
+}
+
+.modalExcluir{
   background: white;
   padding: 30px;
   border-radius: 8px;
@@ -110,6 +118,12 @@ body {
   margin-right: 10px;
 }
 
+.alert{
+  padding: 0;
+  width: 20vw;
+  margin-left: 80px;
+}
+
 #btnEditar{
   font-size: 20px;
   background: #23b03d;
@@ -122,6 +136,40 @@ body {
   
   &:hover{
     background-color:#24e302;
+  }
+}
+
+#btnExcluir{
+  font-size: 20px;
+  background: #23b03d;
+  color: white;
+  width: 110px;
+  padding: 20px;
+  border-radius: 5px;
+  border-style: none;
+  cursor: pointer;
+  transition: 0.3s;
+  margin-left: 5vw;
+  margin-right: 8vw;
+
+  &:hover{
+    background-color:#24e302;
+  }
+}
+
+#btnCancelar{
+  font-size: 20px;
+  background: #c00002;
+  color: white;
+  padding: 20px;
+  border-radius: 5px;
+  margin-top: 5px;
+  border-style: none;
+  cursor: pointer;
+  transition: 0.2s;
+
+  &:hover{
+    background-color:#e83333;
   }
 }
 
@@ -177,22 +225,6 @@ body {
 
 /* Fim Caixa de Pesquisa */
 
-.toggle-button {
-  padding: 10px 20px;
-  color: white;
-  border-radius: 5px;
-  transition: background-color 0.2s ease-in-out;
-  margin-bottom: 10px;
-}
-
-.ativo {
-  background-color: green;
-}
-
-.desativado {
-  background-color: red;
-}
-
 .modal .input-error {
   border: 2px solid red;
   background-color: #ffe6e6;
@@ -239,10 +271,10 @@ table {
 }
 
 tr:nth-child(even) {
-  background-color: #f2f2f2; /* Cinza */
+  background-color: #f2f2f2;
 }
 tr:nth-child(odd) {
-  background-color: #ffffff; /* Branco */
+  background-color: #ffffff; 
 }
 
 th, td {
