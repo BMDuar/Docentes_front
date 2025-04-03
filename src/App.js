@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import api from "./services/api";
-
+import Swal from "sweetalert2";
 
 export default function CadastroDocentes() {
   const [docentes, setDocentes] = useState([]);
   const [matricula, setMatricula] = useState("");
   const [modalType, setModalType] = useState(null); // 'create' ou 'edit'
-  const [modalExcluir,setMoldalExcluir] = useState(false);
+  const [reload, setReload] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [erroNome, setErroNome] = useState("");
   const [erroMatricula, setErroMatricula] = useState("");
@@ -32,39 +32,23 @@ export default function CadastroDocentes() {
     } catch (error) {
       console.error("Erro ao buscar docentes:", error);
       setDocentes([]); // Evita que fique undefined
+    } finally {
+      setReload(false);
     }
   };
 
   useEffect(() => {
     fetchDocentes();
-  }, []);
-  
-  const buscaDocente = async () => {
-    try {
-      const response = await api.get("/docentes");
-      console.log("Dados recebidos:", response.data); // Verifica os dados
-      setDocentes(response.data);
-    } catch (error) {
-      console.error("Erro ao buscar docentes:", error);
-      setDocentes([]); // Evita que fique undefined
-    }
-  };
+  }, [reload]);
 
-  useEffect(() => {
-    fetchDocentes();
-  }, []);
-
-
-  
-  
   const validateEmail = (email) => {
     const regex = /^[a-zA-Z0-9._-]+@(fiec)\.(com\.br|edu\.br)$/;
     return regex.test(email);
   };
-  
+
   //Começo Handles
   // Envia o formulário para o backend
-  const handleSubmit = async (e) => {
+  const HandleSubmit = async (e) => {
     e.preventDefault();
     console.log("Enviando dados para o backend:", formData);
 
@@ -74,7 +58,7 @@ export default function CadastroDocentes() {
       } else {
         await api.post("/docentes/criar", formData);
       }
-      fetchDocentes(); // Atualiza a tabela
+      setReload(true);
       setModalType(null); // Fecha o modal
     } catch (error) {
       console.error(
@@ -84,22 +68,43 @@ export default function CadastroDocentes() {
     }
   };
 
-  const handleDelete = async (matricula) => {
-    try {
-      await api.delete(`/docentes/excluir/${matricula}`);
-      alert("Docente excluído com sucesso!");
-      setMoldalExcluir(false);
-      setMatricula("");
-      fetchDocentes();
-    } catch (error) {
-      console.error("Erro ao excluir docente:", error);
-      alert("Erro ao excluir docente. Verifique se a matrícula está correta.");
-    }
-  };
+  async function HandleDelete(matricula) {
+    await Swal.fire({
+      title: "Você tem certeza?",
+      text: "Essa ação não é reversível!",
+      icon: "warning",
+      iconColor: "red",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      confirmButtonText: "Sim,deletar",
+      cancelButtonColor: "#d33",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await api.delete(`/docentes/excluir/${matricula}`);
+          await Swal.fire({
+            title: "Sucesso!",
+            text: "O docente foi excluido.",
+            icon: "success",
+          });
+          setMatricula("");
+          setReload(true);
+        } catch (error) {
+          console.error("Erro ao excluir docente:", error);
+          await Swal.fire({
+            title: "Erro!",
+            text: "Erro ao excluir docente. Verifique se a matrícula está correta.",
+            icon: "error",
+          });
+        }
+      }
+    });
+  }
 
   const handleChange = (e) => {
     const { id, value } = e.target;
-    
+
     // Validação de e-mail
     if (id === "email") {
       if (!value) {
@@ -115,7 +120,6 @@ export default function CadastroDocentes() {
       }
     }
 
-    
     //Validação do Nome
     if (id === "nome") {
       if (!validarNomeCompleto(value)) {
@@ -125,7 +129,7 @@ export default function CadastroDocentes() {
       }
     }
 
-      // Atualiza o estado do formulário
+    // Atualiza o estado do formulário
     setFormData((prev) => ({
       ...prev,
       [id]: value,
@@ -139,14 +143,14 @@ export default function CadastroDocentes() {
       const dataAdmissao = new Date(
         id === "dataAdmissao" ? value : formData.dataAdmissao
       );
-      
+
       if (dataAdmissao < dataNascimento) {
         setErrorDate("A data de admissão deve ser maior que a de nascimento.");
       } else {
         setErrorDate("");
       }
     }
-    
+
     // Atualiza os campos do formulário
     setFormData((prev) => ({
       ...prev,
@@ -178,20 +182,17 @@ export default function CadastroDocentes() {
       matricula: docente.matricula_doc,
       nome: docente.nome_doc,
       email: docente.email_doc,
-      dataNascimento: new Date(docente.data_nasci_doc.split("T")[0]).toLocaleDateString("pt-BR"),
+      dataNascimento: docente.data_nasci_doc.split("T")[0],
       situacao: docente.situacao_doc,
-      dataAdmissao: docente.data_adimissao_doc,
+      dataAdmissao: docente.data_adimissao_doc.split("T")[0],
       areaConcurso: docente.area_concurso_doc,
       status: docente.status_doc,
     });
     setModalType("edit");
-    console.log(formData.dataNascimento)
   };
 
   //Fim Modais
 
-
-  
   //Inicio Funcoes complementares
   const pesquisarDocentes = () => {
     const termo = searchTerm.trim().toLowerCase();
@@ -205,7 +206,14 @@ export default function CadastroDocentes() {
       const situacao = row.cells[4].textContent.toLowerCase();
       const status = row.cells[5].textContent.toLowerCase();
       row.style.display =
-        matricula.includes(termo) || nome.includes(termo) || email.includes(termo) || areaConcurso.includes(termo) || situacao.includes(termo) || status.includes(termo) ? "" : "none";
+        matricula.includes(termo) ||
+        nome.includes(termo) ||
+        email.includes(termo) ||
+        areaConcurso.includes(termo) ||
+        situacao.includes(termo) ||
+        status.includes(termo)
+          ? ""
+          : "none";
     });
   };
 
@@ -213,22 +221,30 @@ export default function CadastroDocentes() {
   function validarNomeCompleto(nome) {
     // Regex que permite letras, espaços e acentos
     const regex = /^[a-zA-ZÀ-ÿ\s']+$/;
-    
+
     if (!regex.test(nome)) {
       return false;
     }
     // Verifica se tem pelo menos 2 partes (nome e sobrenome)
     const partes = nome.trim().split(/\s+/);
-    return partes.length >= 2 && partes.every(part => part.length >= 2);
+    return partes.length >= 2 && partes.every((part) => part.length >= 2);
   }
 
   // Função para buscar informações pela matrícula
   function buscarDados(matricula) {
     if (api.matricula) {
-      setFormData(api.martricula);
+      setFormData(api.matricula);
       setErroMatricula("");
     } else {
-      setFormData({ nome: "", email: "", dataNascimento: "", dataAdmissao:"", situacao:"", areaConcurso:"" ,status:"" });
+      setFormData({
+        nome: "",
+        email: "",
+        dataNascimento: "",
+        dataAdmissao: "",
+        situacao: "",
+        areaConcurso: "",
+        status: "",
+      });
       setErroMatricula("Matrícula não encontrada.");
     }
   }
@@ -238,14 +254,22 @@ export default function CadastroDocentes() {
     const value = event.target.value;
     setMatricula(value);
 
-    if (value.length >= 5) { // Supondo que a matrícula tenha 5 dígitos
+    if (value.length >= 5) {
+      // Supondo que a matrícula tenha 5 dígitos
       buscarDados(value);
     } else {
-      setFormData({nome: "", email: "", dataNascimento: "", dataAdmissao:"", situacao:"", areaConcurso:"" ,status:"" });
+      setFormData({
+        nome: "",
+        email: "",
+        dataNascimento: "",
+        dataAdmissao: "",
+        situacao: "",
+        areaConcurso: "",
+        status: "",
+      });
       setErroMatricula("");
     }
   }
-
   //Fim funções triviais
 
   return (
@@ -281,7 +305,7 @@ export default function CadastroDocentes() {
             <h2>
               {modalType === "create" ? "Cadastrar Docente" : "Editar Docente"}
             </h2>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={HandleSubmit}>
               <label htmlFor="matricula">Matrícula:</label>
               <input
                 type="text"
@@ -304,10 +328,8 @@ export default function CadastroDocentes() {
                 onChange={handleChange}
                 placeholder="Digite o nome do docente"
               />
-              {erroNome && (
-                <span className="error-message">{erroNome}</span>
-              )}
-              
+              {erroNome && <span className="error-message">{erroNome}</span>}
+
               <label htmlFor="email">E-mail:</label>
               <input
                 type="email"
@@ -341,10 +363,7 @@ export default function CadastroDocentes() {
                 onChange={handleChange}
                 placeholder="Digite a data de admissão do docente"
               />
-               {errorDate && (
-                <span className="error-message">{errorDate}</span>
-              )}
-
+              {errorDate && <span className="error-message">{errorDate}</span>}
 
               <label htmlFor="situacao">Situação:</label>
               <select
@@ -365,18 +384,22 @@ export default function CadastroDocentes() {
                 onChange={handleChange}
                 placeholder="Digite a área do concurso"
               />
-
-              <label htmlFor="status">Status:</label>
-              <select
-                id="status"
-                onChange={handleChange}
-                value={formData.status}
-              >
-                <option value={1}>Ativado</option>
-                <option value={0}>Desativado</option>
-              </select>
-
-              <button type="submit" disabled={!!erroNome ||!!errorDate}>Salvar</button>
+              {modalType === "edit" && (
+                <>
+                  <label htmlFor="status">Status:</label>
+                  <select
+                    id="status"
+                    onChange={handleChange}
+                    value={formData.status}
+                  >
+                    <option value={1}>Ativado</option>
+                    <option value={0}>Desativado</option>
+                  </select>
+                </>
+              )}
+              <button type="submit" disabled={!!erroNome || !!errorDate}>
+                Salvar
+              </button>
               <button type="button" onClick={() => setModalType(null)}>
                 Cancelar
               </button>
@@ -425,32 +448,32 @@ export default function CadastroDocentes() {
                     {docente.status_doc === 1 ? "Ativado" : "Desativado"}
                   </td>
 
-                  {/* Modal Excluir */}
-                  <td> 
-                    {modalExcluir &&(
-                      <div className="modalOverlay">
-                        <div className="modalExcluir">
-                          <img src="/images/cancel.gif" className="alert" alt="Cancelar"></img>
-                        <h3 >Atenção! Deseja excluir o docente? Essa ação não é reversível </h3>
-                        <button type="submit" id="btnExcluir" onClick={() => handleDelete(docente.matricula_doc)}>Sim</button>
-                        <button type="button" onClick={() => setMoldalExcluir(null)} id="btnCancelar"> Cancelar </button>
-                        </div>
-                      </div>
-                    )}
-                    {/* Fim modal Excluir */}
+                  <td>
+                    {/* Modal alert */}
 
-                    <button id="btnEditar" onClick={() => openEditModal(docente)} >
+                    <button
+                      id="btnEditar"
+                      onClick={() => openEditModal(docente)}
+                    >
                       <img
                         src="/images/pencilpreto.png"
                         className="imgEditar"
                         alt="Editar"
                       />
                       <div className="divOverlay"></div>
-                    </button> 
+                    </button>
 
-                    <button onClick={() => setMoldalExcluir(true)} id="btnLixo" >
-                    <img src="/images/lixo.png" className="imgLixo" alt="Excluir docente"></img>
-                    <div className="divOverlay"></div>  
+                    <button
+                      onClick={() => HandleDelete(docente.matricula_doc)}
+                      id="btnLixo"
+                      type="button"
+                    >
+                      <img
+                        src="/images/lixo.png"
+                        className="imgLixo"
+                        alt="Excluir docente"
+                      ></img>
+                      <div className="divOverlay"></div>
                     </button>
                   </td>
                 </tr>
@@ -458,10 +481,10 @@ export default function CadastroDocentes() {
             ) : (
               <tr>
                 <td colSpan="8">Nenhum docente encontrado</td>
-            </tr>
+              </tr>
             )}
           </tbody>
-        </table>      
+        </table>
       </div>
     </div>
   );
