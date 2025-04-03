@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import api from "./services/api";
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 
 export default function CadastroDocentes() {
@@ -11,6 +10,7 @@ export default function CadastroDocentes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [erroNome, setErroNome] = useState("");
   const [erroMatricula, setErroMatricula] = useState("");
+  const [errorDate, setErrorDate] = useState("");
   const [errorEmail, setErrorEmail] = useState({
     email: "",
   });
@@ -38,7 +38,31 @@ export default function CadastroDocentes() {
   useEffect(() => {
     fetchDocentes();
   }, []);
+  
+  const buscaDocente = async () => {
+    try {
+      const response = await api.get("/docentes");
+      console.log("Dados recebidos:", response.data); // Verifica os dados
+      setDocentes(response.data);
+    } catch (error) {
+      console.error("Erro ao buscar docentes:", error);
+      setDocentes([]); // Evita que fique undefined
+    }
+  };
 
+  useEffect(() => {
+    fetchDocentes();
+  }, []);
+
+
+  
+  
+  const validateEmail = (email) => {
+    const regex = /^[a-zA-Z0-9._-]+@(fiec)\.(com\.br|edu\.br)$/;
+    return regex.test(email);
+  };
+  
+  //Começo Handles
   // Envia o formulário para o backend
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -50,7 +74,6 @@ export default function CadastroDocentes() {
       } else {
         await api.post("/docentes/criar", formData);
       }
-
       fetchDocentes(); // Atualiza a tabela
       setModalType(null); // Fecha o modal
     } catch (error) {
@@ -61,27 +84,19 @@ export default function CadastroDocentes() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!matricula.trim()) {
-      alert("Por favor, insira um ID válido.");
-      return;
-    }
+  const handleDelete = async (matricula) => {
     try {
-      await api.delete(`/docentes/${formData.matricula}`);
+      await api.delete(`/docentes/excluir/${matricula}`);
       alert("Docente excluído com sucesso!");
       setMoldalExcluir(false);
       setMatricula("");
+      fetchDocentes();
     } catch (error) {
       console.error("Erro ao excluir docente:", error);
-      alert("Erro ao excluir docente. Verifique se o ID está correto.");
+      alert("Erro ao excluir docente. Verifique se a matrícula está correta.");
     }
   };
 
-  const validateEmail = (email) => {
-    const regex = /^[a-zA-Z0-9._-]+@(fiec)\.(com\.br|edu\.br)$/;
-    return regex.test(email);
-  };
-  
   const handleChange = (e) => {
     const { id, value } = e.target;
     
@@ -110,6 +125,28 @@ export default function CadastroDocentes() {
       }
     }
 
+      // Atualiza o estado do formulário
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+
+    // Validação de data
+    if (id === "dataNascimento" || id === "dataAdmissao") {
+      const dataNascimento = new Date(
+        id === "dataNascimento" ? value : formData.dataNascimento
+      );
+      const dataAdmissao = new Date(
+        id === "dataAdmissao" ? value : formData.dataAdmissao
+      );
+      
+      if (dataAdmissao < dataNascimento) {
+        setErrorDate("A data de admissão deve ser maior que a de nascimento.");
+      } else {
+        setErrorDate("");
+      }
+    }
+    
     // Atualiza os campos do formulário
     setFormData((prev) => ({
       ...prev,
@@ -117,6 +154,9 @@ export default function CadastroDocentes() {
     }));
   };
 
+  //Fim Handles
+
+  //Modais
   const openCreateModal = () => {
     // Limpa o formulário para um novo cadastro
     setFormData({
@@ -132,19 +172,23 @@ export default function CadastroDocentes() {
     setModalType("create");
   };
 
-  const openEditModal = () => {
+  const openEditModal = (docente) => {
+    console.log(docente);
     setFormData({
-      matricula: "",
-      nome: "",
-      email: "",
-      dataNascimento: "",
-      situacao: "Estatutário",
-      dataAdmissao: "",
-      areaConcurso: "",
-      status: "1",
+      matricula: docente.matricula_doc,
+      nome: docente.nome_doc,
+      email: docente.email_doc,
+      dataNascimento: new Date(docente.data_nasci_doc.split("T")[0]).toLocaleDateString("pt-BR"),
+      situacao: docente.situacao_doc,
+      dataAdmissao: docente.data_adimissao_doc,
+      areaConcurso: docente.area_concurso_doc,
+      status: docente.status_doc,
     });
     setModalType("edit");
+    console.log(formData.dataNascimento)
   };
+
+  //Fim Modais
 
 
   
@@ -206,19 +250,11 @@ export default function CadastroDocentes() {
 
   return (
     <div className="container">
-      <img src="favicon.ico" className="logo" />
+      <img src="favicon.ico" className="logo" alt="logo" />
       <h1>Cadastro de Docentes</h1>
       <button id="btnNovoDocente" onClick={openCreateModal}>
-        <img src="/images/mais.png" className="mais" />
+        <img src="/images/mais.png" className="mais" alt="Criar docente" />
         Novo
-      </button>
-      <button id="btnEditar" onClick={() => openEditModal(docentes.matricula)}>
-        <img
-          src="/images/pencilbranco.png"
-          className="pencilEditar"
-          alt="Editar"
-        />
-        Editar Docente
       </button>
       <div className="searchContainer">
         <input
@@ -264,11 +300,14 @@ export default function CadastroDocentes() {
                 id="nome"
                 required
                 value={formData.nome}
+                className={erroNome ? "input-error" : ""}
                 onChange={handleChange}
                 placeholder="Digite o nome do docente"
               />
-              {erroNome && <p style={{ color: "red", fontSize:"12px" , marginTop:"5px",border:"2px solid red",backgroundColor:"#ffe6e6"}}>{erroNome}</p>}
-
+              {erroNome && (
+                <span className="error-message">{erroNome}</span>
+              )}
+              
               <label htmlFor="email">E-mail:</label>
               <input
                 type="email"
@@ -297,10 +336,15 @@ export default function CadastroDocentes() {
                 type="date"
                 id="dataAdmissao"
                 required
+                className={errorDate ? "input-error" : ""}
                 value={formData.dataAdmissao}
                 onChange={handleChange}
                 placeholder="Digite a data de admissão do docente"
               />
+               {errorDate && (
+                <span className="error-message">{errorDate}</span>
+              )}
+
 
               <label htmlFor="situacao">Situação:</label>
               <select
@@ -332,7 +376,7 @@ export default function CadastroDocentes() {
                 <option value={0}>Desativado</option>
               </select>
 
-              <button type="submit" disabled={!!erroNome}>Salvar</button>
+              <button type="submit" disabled={!!erroNome ||!!errorDate}>Salvar</button>
               <button type="button" onClick={() => setModalType(null)}>
                 Cancelar
               </button>
@@ -374,11 +418,11 @@ export default function CadastroDocentes() {
                   <td>{docente.area_concurso_doc}</td>
                   <td
                     style={{
-                      color: docente.status_doc == 1 ? "green" : "red",
+                      color: docente.status_doc === 1 ? "green" : "red",
                       fontWeight: "bold",
                     }}
                   >
-                    {docente.status_doc == 1 ? "Ativado" : "Desativado"}
+                    {docente.status_doc === 1 ? "Ativado" : "Desativado"}
                   </td>
 
                   {/* Modal Excluir */}
@@ -386,17 +430,27 @@ export default function CadastroDocentes() {
                     {modalExcluir &&(
                       <div className="modalOverlay">
                         <div className="modalExcluir">
-                          <img src="/images/cancel.gif" className="alert"></img>
+                          <img src="/images/cancel.gif" className="alert" alt="Cancelar"></img>
                         <h3 >Atenção! Deseja excluir o docente? Essa ação não é reversível </h3>
-                        <button type="submit" id="btnExcluir" onChange={handleDelete}>Sim</button>
+                        <button type="submit" id="btnExcluir" onClick={() => handleDelete(docente.matricula_doc)}>Sim</button>
                         <button type="button" onClick={() => setMoldalExcluir(null)} id="btnCancelar"> Cancelar </button>
                         </div>
                       </div>
                     )}
                     {/* Fim modal Excluir */}
 
-                    <button style={{ border: "none", background: "none", cursor: "pointer" }} onClick={() => setMoldalExcluir(true)} >
-                    <img src="/images/lixo.png" className="btnLixo"></img>  
+                    <button id="btnEditar" onClick={() => openEditModal(docente)} >
+                      <img
+                        src="/images/pencilpreto.png"
+                        className="imgEditar"
+                        alt="Editar"
+                      />
+                      <div className="divOverlay"></div>
+                    </button> 
+
+                    <button onClick={() => setMoldalExcluir(true)} id="btnLixo" >
+                    <img src="/images/lixo.png" className="imgLixo" alt="Excluir docente"></img>
+                    <div className="divOverlay"></div>  
                     </button>
                   </td>
                 </tr>
@@ -407,10 +461,6 @@ export default function CadastroDocentes() {
             </tr>
             )}
           </tbody>
-            {docentes && docentes.length > 0 && 
-              document.querySelectorAll("#docentesTable tbody tr[style='display: none;']").length === docentes.length && (
-              <div className="no-results">Nenhum resultado encontrado para "{searchTerm}"</div>
-            )}
         </table>      
       </div>
     </div>

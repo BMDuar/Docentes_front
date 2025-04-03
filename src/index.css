@@ -111,67 +111,74 @@ body {
   margin-right: 10px;
 }
 
-.pencilEditar{
-  padding: 0;
+/* Estilo botao editar */
+.imgEditar{
   width: 20px;
-  height: 19px;
+  height: 20px;
   margin-right: 10px;
+  object-fit: cover;
+  transition: transform 0.3s ease;
 }
 
-.alert{
-  padding: 0;
-  width: 20vw;
-  margin-left: 80px;
+.divOverlay{
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0);
+  transition: background-color 0.3s ease;
 }
+
 
 #btnEditar{
-  font-size: 20px;
-  background: #23b03d;
-  color: white;
-  padding: 20px;
-  border-radius: 5px;
-  border-style: none;
+  position: relative;
+  border: none;
+  background: none;
   cursor: pointer;
-  transition: 0.2s;
+  padding: 0;
+  border-radius: 5px;
+  overflow: hidden;
+  width: 20px;
+  height: 20px;
+  margin-left: 17px;
+  transition: 0.1s;
   
-  &:hover{
-    background-color:#24e302;
-  }
 }
 
-#btnExcluir{
-  font-size: 20px;
-  background: #23b03d;
-  color: white;
-  width: 110px;
-  padding: 20px;
-  border-radius: 5px;
-  border-style: none;
+#btnEditar:hover .divOverlay{
+  background-color: rgba(0, 0, 0, 0.3);
+}
+/* Fim estilo botao editar */
+
+/* Estilo botao excluir */
+.imgLixo{
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+#btnLixo{
+  position: relative;
+  border: none;
+  background: none;
   cursor: pointer;
-  transition: 0.3s;
-  margin-left: 5vw;
-  margin-right: 8vw;
-
-  &:hover{
-    background-color:#24e302;
-  }
-}
-
-#btnCancelar{
-  font-size: 20px;
-  background: #c00002;
-  color: white;
-  padding: 20px;
+  padding: 0;
   border-radius: 5px;
-  margin-top: 5px;
-  border-style: none;
-  cursor: pointer;
-  transition: 0.2s;
-
-  &:hover{
-    background-color:#e83333;
-  }
+  overflow: hidden;
+  width: 20px;
+  height: 20px;
+  margin-left: 20px;
+  margin-right: 10px;
+  transition: 0.1s;
+  
 }
+
+#btnLixo:hover .divOverlay{
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Fim estilo botao excluir */
+
 
 .btnLixo{
   padding: 0;
@@ -225,9 +232,50 @@ body {
 
 /* Fim Caixa de Pesquisa */
 
+#btnCancelar{
+  font-size: 20px;
+  background: #c00002;
+  color: white;
+  padding: 20px;
+  border-radius: 5px;
+  margin-top: 5px;
+  border-style: none;
+  cursor: pointer;
+  transition: 0.2s;
+
+  &:hover{
+    background-color:#e83333;
+  }
+}
+
+#btnExcluir{
+  font-size: 20px;
+  width: 6vw;
+  background: #006A4E;
+  color: white;
+  padding: 20px;
+  margin-left: 6vw;
+  margin-right: 5vw;
+  border-radius: 5px;
+  margin-top: 5px;
+  border-style: none;
+  cursor: pointer;
+  transition: 0.2s;
+
+  &:hover{
+    background-color:#1CAC78;
+  }
+}
+
 .modal .input-error {
   border: 2px solid red;
   background-color: #ffe6e6;
+}
+
+.alert{
+  padding: 0;
+  width: 20vw;
+  margin-left: 80px;
 }
 
 .error-message {
