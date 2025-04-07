@@ -20,6 +20,7 @@ export default function CadastroDocentes() {
     email: "",
     dataNascimento: "",
     situacao: "Estatutário",
+    areaConcurso:"",
     dataAdmissao: "",
     status: "1",
   });
@@ -68,6 +69,7 @@ export default function CadastroDocentes() {
     }
   };
 
+  //deletar docente
   async function HandleDelete(matricula) {
     await Swal.fire({
       title: "Você tem certeza?",
@@ -104,6 +106,17 @@ export default function CadastroDocentes() {
 
   const handleChange = (e) => {
     const { id, value } = e.target;
+
+    //Validação da matrícula
+    if (id === "matricula") {
+      const numericValue = value.replace(/\D/g, ""); // Remove caracteres não numéricos
+      setFormData((prev) => ({
+        ...prev,
+        matricula:"Apenas valores numéricos",
+        [id]: numericValue.slice(0, 5), // Limita a 5 dígitos
+      }));
+      return;
+    }
 
     // Validação de e-mail
     if (id === "email") {
@@ -161,6 +174,7 @@ export default function CadastroDocentes() {
   //Fim Handles
 
   //Modais
+  //Modal criar docente
   const openCreateModal = () => {
     // Limpa o formulário para um novo cadastro
     setFormData({
@@ -176,6 +190,7 @@ export default function CadastroDocentes() {
     setModalType("create");
   };
 
+  //modal editar docente
   const openEditModal = (docente) => {
     console.log(docente);
     setFormData({
@@ -191,30 +206,15 @@ export default function CadastroDocentes() {
     setModalType("edit");
   };
 
+  //Modal alert no handleDelete
   //Fim Modais
-
+  
   //Inicio Funcoes complementares
-  const pesquisarDocentes = () => {
-    const termo = searchTerm.trim().toLowerCase();
-    const rows = document.querySelectorAll("#docentesTable tbody tr");
-
-    rows.forEach((row) => {
-      const matricula = row.cells[0].textContent.toLowerCase();
-      const nome = row.cells[1].textContent.toLowerCase();
-      const email = row.cells[2].textContent.toLowerCase();
-      const areaConcurso = row.cells[3].textContent.toLowerCase();
-      const situacao = row.cells[4].textContent.toLowerCase();
-      const status = row.cells[5].textContent.toLowerCase();
-      row.style.display =
-        matricula.includes(termo) ||
-        nome.includes(termo) ||
-        email.includes(termo) ||
-        areaConcurso.includes(termo) ||
-        situacao.includes(termo) ||
-        status.includes(termo)
-          ? ""
-          : "none";
-    });
+  //Remover acentos
+  const removerAcentos = (texto) => {
+    return texto
+      .normalize("NFD") // Decompõe caracteres acentuados em letra + acento
+      .replace(/[\u0300-\u036f]/g, ""); // Remove os acentos
   };
 
   //Validar Nome e Sobrenome
@@ -230,47 +230,37 @@ export default function CadastroDocentes() {
     return partes.length >= 2 && partes.every((part) => part.length >= 2);
   }
 
-  // Função para buscar informações pela matrícula
-  function buscarDados(matricula) {
-    if (api.matricula) {
-      setFormData(api.matricula);
-      setErroMatricula("");
-    } else {
-      setFormData({
-        nome: "",
-        email: "",
-        dataNascimento: "",
-        dataAdmissao: "",
-        situacao: "",
-        areaConcurso: "",
-        status: "",
-      });
-      setErroMatricula("Matrícula não encontrada.");
-    }
-  }
+  //Pesquisar docentes(searchinput)
+  const pesquisarDocentes = () => {
+    const termo = removerAcentos(searchTerm.trim().toLowerCase());
+    const rows = document.querySelectorAll("#docentesTable tbody tr");
+  
+    rows.forEach((row) => {
+      const matricula = removerAcentos(row.cells[0].textContent.toLowerCase());
+      const nome = removerAcentos(row.cells[1].textContent.toLowerCase());
+      const email = removerAcentos(row.cells[2].textContent.toLowerCase());
+      const dataNascimento = removerAcentos(row.cells[3].textContent.toLowerCase());
+      const dataAdmissao = removerAcentos(row.cells[4].textContent.toLowerCase());
+      const situacao = removerAcentos(row.cells[5].textContent.toLowerCase());
+      const areaConcurso = removerAcentos(row.cells[6].textContent.toLowerCase());
+      const status = removerAcentos(row.cells[7].textContent.toLowerCase());
+  
+      row.style.display =
+        matricula.includes(termo) ||
+        nome.includes(termo) ||
+        email.includes(termo) ||
+        dataNascimento.includes(termo) ||
+        dataAdmissao.includes(termo) ||
+        situacao.includes(termo) ||
+        areaConcurso.includes(termo) ||
+        status.includes(termo)
+          ? ""
+          : "none";
+    });
+  };
+  
 
-  // Função chamada ao digitar a matrícula
-  function handleMatriculaChange(event) {
-    const value = event.target.value;
-    setMatricula(value);
-
-    if (value.length >= 5) {
-      // Supondo que a matrícula tenha 5 dígitos
-      buscarDados(value);
-    } else {
-      setFormData({
-        nome: "",
-        email: "",
-        dataNascimento: "",
-        dataAdmissao: "",
-        situacao: "",
-        areaConcurso: "",
-        status: "",
-      });
-      setErroMatricula("");
-    }
-  }
-  //Fim funções triviais
+  //Fim funções complementares
 
   return (
     <div className="container">
@@ -313,10 +303,12 @@ export default function CadastroDocentes() {
                 required
                 value={formData.matricula}
                 onChange={handleChange}
+                className={erroMatricula ? "input-error" : ""}
                 placeholder="Digite o número da matrícula"
                 maxLength={5}
                 minLength={5}
               />
+              {erroMatricula &&<span className="error-message">{erroNome}</span>}
 
               <label htmlFor="nome">Nome Completo:</label>
               <input
